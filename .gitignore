@@ -4,3 +4,26 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Replit / local files
+.local/
+.local/state/
+*.db
+*.db-wal
+*.db-shm
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Build / cache
+.vite/
+.cache/
+coverage/
+
+# Archives
+*.zip
