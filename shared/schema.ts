@@ -570,3 +570,41 @@ export const goals = pgTable("goals", {
 export const insertGoalSchema = createInsertSchema(goals).omit({ id: true, createdAt: true });
 export type Goal = typeof goals.$inferSelect;
 export type InsertGoal = z.infer<typeof insertGoalSchema>;
+
+// Shifts schema
+export const shifts = pgTable("shifts", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  description: text("description"),
+  color: text("color").notNull().default('amber'),
+});
+
+export const insertShiftSchema = createInsertSchema(shifts).pick({
+  name: true,
+  startTime: true,
+  endTime: true,
+  description: true,
+  color: true,
+});
+export type InsertShift = z.infer<typeof insertShiftSchema>;
+export type Shift = typeof shifts.$inferSelect;
+
+// Shift Assignments schema
+export const shiftAssignments = pgTable("shift_assignments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  shiftId: integer("shift_id").notNull().references(() => shifts.id),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date").notNull(),
+});
+
+export const insertShiftAssignmentSchema = createInsertSchema(shiftAssignments).pick({
+  userId: true,
+  shiftId: true,
+  startDate: true,
+  endDate: true,
+});
+export type InsertShiftAssignment = z.infer<typeof insertShiftAssignmentSchema>;
+export type ShiftAssignment = typeof shiftAssignments.$inferSelect;

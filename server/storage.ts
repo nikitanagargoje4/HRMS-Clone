@@ -9,7 +9,8 @@ import {
   CompanyMaster, InsertCompanyMaster, CostCenter, InsertCostCenter,
   DocumentApproval, InsertDocumentApproval, EmployeeDeduction, InsertEmployeeDeduction,
   Certification, InsertCertification,
-  Goal, InsertGoal
+  Goal, InsertGoal,
+  Shift, InsertShift, ShiftAssignment, InsertShiftAssignment
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -100,6 +101,7 @@ export interface IStorage {
   getPaymentRecordsByMonth(month: string): Promise<PaymentRecord[]>;
   createPaymentRecord(paymentRecord: InsertPaymentRecord): Promise<PaymentRecord>;
   updatePaymentRecord(id: number, paymentRecord: Partial<PaymentRecord>): Promise<PaymentRecord | undefined>;
+  deletePaymentRecord(id: number): Promise<boolean>;
 
   // Certification methods
   getCertification(id: number): Promise<Certification | undefined>;
@@ -108,7 +110,6 @@ export interface IStorage {
   createCertification(certification: InsertCertification): Promise<Certification>;
   updateCertification(id: number, certification: Partial<Certification>): Promise<Certification | undefined>;
   deleteCertification(id: number): Promise<boolean>;
-  deletePaymentRecord(id: number): Promise<boolean>;
 
   // Leave balance calculation methods
   calculateLeaveBalance(userId: number, asOfDate?: Date): Promise<LeaveBalance>;
@@ -124,6 +125,19 @@ export interface IStorage {
   createGoal(goal: InsertGoal): Promise<Goal>;
   updateGoal(id: number, goal: Partial<Goal>): Promise<Goal | undefined>;
   deleteGoal(id: number): Promise<boolean>;
+
+  // Shift methods
+  getShifts(): Promise<Shift[]>;
+  getShift(id: number): Promise<Shift | undefined>;
+  createShift(shift: InsertShift): Promise<Shift>;
+  updateShift(id: number, shift: Partial<Shift>): Promise<Shift | undefined>;
+  deleteShift(id: number): Promise<boolean>;
+
+  // Shift Assignment methods
+  getShiftAssignments(): Promise<ShiftAssignment[]>;
+  createShiftAssignment(assignment: InsertShiftAssignment): Promise<ShiftAssignment>;
+  deleteShiftAssignment(id: number): Promise<boolean>;
+  deleteShiftAssignmentByUser(userId: number): Promise<boolean>;
 
   // Session store
   sessionStore: session.Store;

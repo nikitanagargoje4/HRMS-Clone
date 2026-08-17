@@ -21,7 +21,7 @@
   },
   "salaryComponents": {
     "basicSalaryPercentage": 50,
-    "hraPercentage": 30,
+    "hraPercentage": 50,
     "epfPercentage": 12,
     "esicPercentage": 2.5,
     "professionalTax": 200

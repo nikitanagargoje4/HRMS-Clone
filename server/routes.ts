@@ -17,7 +17,9 @@ import {
   insertCostCenterSchema,
   insertDocumentApprovalSchema,
   insertEmployeeDeductionSchema,
-  insertCertificationSchema
+  insertCertificationSchema,
+  insertShiftSchema,
+  insertShiftAssignmentSchema
 } from "@shared/schema";
 import { z } from "zod";
 import crypto from "crypto";
@@ -2538,9 +2540,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/goals/:id", async (req, res, next) => {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
-      const deleted = await storage.deleteGoal(parseInt(req.params.id));
-      if (!deleted) return res.status(404).json({ message: "Goal not found" });
-      res.json({ message: "Goal deleted" });
+      const success = await storage.deleteGoal(parseInt(req.params.id));
+      if (!success) return res.status(404).json({ message: "Not found" });
+      res.status(204).end();
+    } catch (error) { next(error); }
+  });
+
+  // ==================== SHIFTS API ====================
+  app.get("/api/shifts", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      const shifts = await storage.getShifts();
+      res.json(shifts);
+    } catch (error) { next(error); }
+  });
+
+  app.post("/api/shifts", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      const validatedData = insertShiftSchema.parse(req.body);
+      const shift = await storage.createShift(validatedData);
+      res.status(201).json(shift);
+    } catch (error) { next(error); }
+  });
+
+  app.put("/api/shifts/:id", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      const validatedData = insertShiftSchema.partial().parse(req.body);
+      const shift = await storage.updateShift(parseInt(req.params.id), validatedData);
+      if (!shift) return res.status(404).json({ message: "Not found" });
+      res.json(shift);
+    } catch (error) { next(error); }
+  });
+
+  app.delete("/api/shifts/:id", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      const success = await storage.deleteShift(parseInt(req.params.id));
+      if (!success) return res.status(404).json({ message: "Not found" });
+      res.status(204).end();
+    } catch (error) { next(error); }
+  });
+
+  // ==================== SHIFT ASSIGNMENTS API ====================
+  app.get("/api/shifts/assignments", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      const assignments = await storage.getShiftAssignments();
+      // Join shift details for UI convenience
+      const shifts = await storage.getShifts();
+      const enrichedAssignments = assignments.map(a => {
+        const shift = shifts.find(s => s.id === a.shiftId);
+        return {
+          ...a,
+          shiftName: shift?.name
+        };
+      });
+      res.json(enrichedAssignments);
+    } catch (error) { next(error); }
+  });
+
+  app.post("/api/shifts/assign", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      const validatedData = insertShiftAssignmentSchema.parse(req.body);
+      const assignment = await storage.createShiftAssignment(validatedData);
+      res.status(201).json(assignment);
     } catch (error) { next(error); }
   });
 

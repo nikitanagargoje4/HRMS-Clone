@@ -37,6 +37,8 @@ interface StorageData {
   documentApprovals: DocumentApproval[];
   employeeDeductions: EmployeeDeduction[];
   goals: Goal[];
+  shifts: Shift[];
+  shiftAssignments: ShiftAssignment[];
   systemSettings: any;
   currentUserId: number;
   currentDepartmentId: number;
@@ -55,6 +57,8 @@ interface StorageData {
   currentDocumentApprovalId: number;
   currentEmployeeDeductionId: number;
   currentGoalId: number;
+  currentShiftId: number;
+  currentShiftAssignmentId: number;
 }
 
 export class FileStorage implements IStorage {
@@ -82,6 +86,8 @@ export class FileStorage implements IStorage {
       documentApprovals: [],
       employeeDeductions: [],
       goals: [],
+      shifts: [],
+      shiftAssignments: [],
       systemSettings: {},
       currentUserId: 1,
       currentDepartmentId: 1,
@@ -100,6 +106,8 @@ export class FileStorage implements IStorage {
       currentDocumentApprovalId: 1,
       currentEmployeeDeductionId: 1,
       currentGoalId: 1,
+      currentShiftId: 1,
+      currentShiftAssignmentId: 1,
     };
 
     this.sessionStore = new MemoryStore({
@@ -193,52 +201,28 @@ export class FileStorage implements IStorage {
           : 1);
       }
 
-      // Initialize all missing current*Id counters based on max IDs
-      if (!this.data.currentUserId) {
-        this.data.currentUserId = this.data.users.length > 0 ? Math.max(...this.data.users.map(u => u.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentDepartmentId) {
-        this.data.currentDepartmentId = this.data.departments?.length > 0 ? Math.max(...this.data.departments.map(d => d.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentAttendanceId) {
-        this.data.currentAttendanceId = this.data.attendanceRecords?.length > 0 ? Math.max(...this.data.attendanceRecords.map(a => a.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentLeaveRequestId) {
-        this.data.currentLeaveRequestId = this.data.leaveRequests?.length > 0 ? Math.max(...this.data.leaveRequests.map(l => l.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentHolidayId) {
-        this.data.currentHolidayId = this.data.holidayRecords?.length > 0 ? Math.max(...this.data.holidayRecords.map(h => h.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentNotificationId) {
-        this.data.currentNotificationId = this.data.notifications?.length > 0 ? Math.max(...this.data.notifications.map(n => n.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentPaymentRecordId) {
-        this.data.currentPaymentRecordId = this.data.paymentRecords?.length > 0 ? Math.max(...this.data.paymentRecords.map(p => p.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentBankMasterId) {
-        this.data.currentBankMasterId = this.data.bankMasters?.length > 0 ? Math.max(...this.data.bankMasters.map(b => b.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentCategoryMasterId) {
-        this.data.currentCategoryMasterId = this.data.categoryMasters?.length > 0 ? Math.max(...this.data.categoryMasters.map(c => c.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentCompanyMasterId) {
-        this.data.currentCompanyMasterId = this.data.companyMasters?.length > 0 ? Math.max(...this.data.companyMasters.map(c => c.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentCostCenterId) {
-        this.data.currentCostCenterId = this.data.costCenters?.length > 0 ? Math.max(...this.data.costCenters.map(c => c.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentDocumentApprovalId) {
-        this.data.currentDocumentApprovalId = this.data.documentApprovals?.length > 0 ? Math.max(...this.data.documentApprovals.map(d => d.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentEmployeeDeductionId) {
-        this.data.currentEmployeeDeductionId = this.data.employeeDeductions?.length > 0 ? Math.max(...this.data.employeeDeductions.map(e => e.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentGoalId) {
-        this.data.currentGoalId = this.data.goals?.length > 0 ? Math.max(...this.data.goals.map(g => g.id || 0)) + 1 : 1;
-      }
-      if (!this.data.currentCertificationId) {
-        this.data.currentCertificationId = this.data.certifications?.length > 0 ? Math.max(...this.data.certifications.map(c => c.id || 0)) + 1 : 1;
-      }
+      // Set defaults for newly added tracking properties in case they're missing from the JSON file
+      if (this.data.currentUserId === undefined) this.data.currentUserId = Math.max(1, ...this.data.users.map(u => u.id)) + 1;
+      if (this.data.currentDepartmentId === undefined) this.data.currentDepartmentId = Math.max(1, ...this.data.departments.map(d => d.id)) + 1;
+      if (this.data.currentUnitId === undefined) this.data.currentUnitId = Math.max(1, ...this.data.units.map(u => u.id)) + 1;
+      if (this.data.currentAttendanceId === undefined) this.data.currentAttendanceId = Math.max(1, ...this.data.attendanceRecords.map(a => a.id)) + 1;
+      if (this.data.currentLeaveRequestId === undefined) this.data.currentLeaveRequestId = Math.max(1, ...this.data.leaveRequests.map(l => l.id)) + 1;
+      if (this.data.currentHolidayId === undefined) this.data.currentHolidayId = Math.max(1, ...this.data.holidayRecords.map(h => h.id)) + 1;
+      if (this.data.currentNotificationId === undefined) this.data.currentNotificationId = Math.max(1, ...this.data.notifications.map(n => n.id)) + 1;
+      if (this.data.currentPaymentRecordId === undefined) this.data.currentPaymentRecordId = Math.max(1, ...this.data.paymentRecords.map(p => p.id)) + 1;
+      if (this.data.currentInvitationId === undefined) this.data.currentInvitationId = Math.max(1, ...this.data.employeeInvitations.map(i => i.id)) + 1;
+      if (this.data.currentCertificationId === undefined) this.data.currentCertificationId = Math.max(1, ...this.data.certifications.map(c => c.id)) + 1;
+      if (this.data.currentBankMasterId === undefined) this.data.currentBankMasterId = Math.max(1, ...this.data.bankMasters.map(b => b.id)) + 1;
+      if (this.data.currentCategoryMasterId === undefined) this.data.currentCategoryMasterId = Math.max(1, ...this.data.categoryMasters.map(c => c.id)) + 1;
+      if (this.data.currentCompanyMasterId === undefined) this.data.currentCompanyMasterId = Math.max(1, ...this.data.companyMasters.map(c => c.id)) + 1;
+      if (this.data.currentCostCenterId === undefined) this.data.currentCostCenterId = Math.max(1, ...this.data.costCenters.map(c => c.id)) + 1;
+      if (this.data.currentDocumentApprovalId === undefined) this.data.currentDocumentApprovalId = Math.max(1, ...this.data.documentApprovals.map(d => d.id)) + 1;
+      if (this.data.currentEmployeeDeductionId === undefined) this.data.currentEmployeeDeductionId = Math.max(1, ...this.data.employeeDeductions.map(e => e.id)) + 1;
+      if (this.data.currentGoalId === undefined) this.data.currentGoalId = Math.max(1, ...this.data.goals.map(g => g.id)) + 1;
+      if (this.data.currentShiftId === undefined) this.data.currentShiftId = Math.max(1, ...(this.data.shifts || []).map(s => s.id)) + 1;
+      if (this.data.currentShiftAssignmentId === undefined) this.data.currentShiftAssignmentId = Math.max(1, ...(this.data.shiftAssignments || []).map(a => a.id)) + 1;
+      if (!this.data.shifts) this.data.shifts = [];
+      if (!this.data.shiftAssignments) this.data.shiftAssignments = [];
 
     } catch (error) {
       // File doesn't exist, start with empty data
@@ -1085,5 +1069,80 @@ export class FileStorage implements IStorage {
     this.data.systemSettings = { ...this.data.systemSettings, ...settings };
     await this.saveData();
     return this.data.systemSettings;
+  }
+
+  // Shift methods
+  async getShifts(): Promise<Shift[]> {
+    return this.data.shifts || [];
+  }
+
+  async getShift(id: number): Promise<Shift | undefined> {
+    return (this.data.shifts || []).find((s) => s.id === id);
+  }
+
+  async createShift(shift: InsertShift): Promise<Shift> {
+    const newShift = { ...shift, id: this.data.currentShiftId++ } as Shift;
+    if (!this.data.shifts) this.data.shifts = [];
+    this.data.shifts.push(newShift);
+    await this.saveData();
+    return newShift;
+  }
+
+  async updateShift(id: number, shift: Partial<Shift>): Promise<Shift | undefined> {
+    const index = (this.data.shifts || []).findIndex((s) => s.id === id);
+    if (index === -1) return undefined;
+    
+    this.data.shifts[index] = { ...this.data.shifts[index], ...shift };
+    await this.saveData();
+    return this.data.shifts[index];
+  }
+
+  async deleteShift(id: number): Promise<boolean> {
+    const index = (this.data.shifts || []).findIndex((s) => s.id === id);
+    if (index === -1) return false;
+    
+    this.data.shifts.splice(index, 1);
+    await this.saveData();
+    return true;
+  }
+
+  // Shift Assignment methods
+  async getShiftAssignments(): Promise<ShiftAssignment[]> {
+    return this.data.shiftAssignments || [];
+  }
+
+  async createShiftAssignment(assignment: InsertShiftAssignment): Promise<ShiftAssignment> {
+    const newAssignment = { ...assignment, id: this.data.currentShiftAssignmentId++ } as ShiftAssignment;
+    if (!this.data.shiftAssignments) this.data.shiftAssignments = [];
+    
+    // Check if employee already has an assignment and remove it
+    const existingIndex = this.data.shiftAssignments.findIndex(a => a.userId === assignment.userId);
+    if (existingIndex !== -1) {
+      this.data.shiftAssignments.splice(existingIndex, 1);
+    }
+    
+    this.data.shiftAssignments.push(newAssignment);
+    await this.saveData();
+    return newAssignment;
+  }
+
+  async deleteShiftAssignment(id: number): Promise<boolean> {
+    const index = (this.data.shiftAssignments || []).findIndex((a) => a.id === id);
+    if (index === -1) return false;
+    
+    this.data.shiftAssignments.splice(index, 1);
+    await this.saveData();
+    return true;
+  }
+  
+  async deleteShiftAssignmentByUser(userId: number): Promise<boolean> {
+    const initialLength = (this.data.shiftAssignments || []).length;
+    this.data.shiftAssignments = (this.data.shiftAssignments || []).filter(a => a.userId !== userId);
+    
+    if (this.data.shiftAssignments.length !== initialLength) {
+      await this.saveData();
+      return true;
+    }
+    return false;
   }
 }
