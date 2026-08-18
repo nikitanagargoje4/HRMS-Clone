@@ -72,7 +72,7 @@ export default function EmployeesPage() {
   const [addMethod, setAddMethod] = useState<'invitation' | 'manual'>('invitation');
   const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedUnit, setSelectedUnit] = useState("");
+  const [selectedUnit, setSelectedUnit] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 30;
 
@@ -88,11 +88,7 @@ export default function EmployeesPage() {
     queryKey: ["/api/masters/units"],
   });
 
-  useEffect(() => {
-    if (units.length > 0 && !selectedUnit) {
-      setSelectedUnit(units[0].id.toString());
-    }
-  }, [units]);
+
 
   const deleteEmployeeMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -120,7 +116,7 @@ export default function EmployeesPage() {
   const filteredEmployees = employees.filter((employee) => {
     const searchLower = searchQuery.toLowerCase();
     const dept = departments.find(d => d.id === employee.departmentId);
-    const matchesUnit = !selectedUnit || (dept && String(dept.unitId) === selectedUnit);
+    const matchesUnit = !selectedUnit || selectedUnit === "all" || (dept && String(dept.unitId) === selectedUnit);
     const matchesSearch = (
       employee.firstName.toLowerCase().includes(searchLower) ||
       employee.lastName.toLowerCase().includes(searchLower) ||
@@ -148,7 +144,7 @@ export default function EmployeesPage() {
   };
 
   const unitFilteredEmployees = employees.filter(emp => {
-    if (!selectedUnit) return true;
+    if (!selectedUnit || selectedUnit === "all") return true;
     const dept = departments.find(d => d.id === emp.departmentId);
     return dept && String(dept.unitId) === selectedUnit;
   });
@@ -285,6 +281,8 @@ export default function EmployeesPage() {
                     ) : (
                       <MultiStepEmployeeForm
                         departments={departments}
+                        units={units}
+                        selectedUnit={selectedUnit}
                         onSuccess={() => {
                           setIsAddFormVisible(false);
                           queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
@@ -360,9 +358,10 @@ export default function EmployeesPage() {
                 <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Unit</label>
                 <Select value={selectedUnit} onValueChange={handleUnitChange}>
                   <SelectTrigger className="h-10 w-52 bg-white/[0.02] border border-white/[0.08] focus:border-blue-500/50" data-testid="select-unit-filter">
-                    <SelectValue placeholder={units?.[0]?.name || "Select Unit"} />
+                    <SelectValue placeholder="All Companies" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">All Companies</SelectItem>
                     {units.map((u: Unit) => (
                       <SelectItem key={u.id} value={String(u.id)} data-testid={`option-unit-${u.id}`}>
                         {u.name}

@@ -1940,21 +1940,21 @@ export default function PayrollPage() {
               <TabsList className="bg-gradient-to-r from-slate-100 to-slate-200 p-1 rounded-xl h-12 border-2 border-slate-300">
                 <TabsTrigger
                   value="overview"
-                  className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-blue-200 text-slate-700 font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-white/50"
+                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md text-slate-700 font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-slate-100"
                 >
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Overview
                 </TabsTrigger>
                 <TabsTrigger
                   value="salary"
-                  className="data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-emerald-200 text-slate-700 font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-white/50"
+                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md text-slate-700 font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-slate-100"
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Salary
                 </TabsTrigger>
                 <TabsTrigger
                   value="payments"
-                  className="data-[state=active]:bg-white data-[state=active]:text-purple-600 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-purple-200 text-slate-700 font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-white/50"
+                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md text-slate-700 font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-slate-100"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
                   Payment Tracking

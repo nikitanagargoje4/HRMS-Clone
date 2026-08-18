@@ -114,41 +114,45 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      // Check employee count limits
-      const allUsers = await storage.getUsers();
-      
-      // Load system settings to check employee limits
-      const SETTINGS_FILE_PATH = path.join(process.cwd(), 'data', 'system-settings.json');
-      let systemSettings: any = {};
-      try {
-        const settingsData = await fs.readFile(SETTINGS_FILE_PATH, 'utf-8');
-        systemSettings = JSON.parse(settingsData);
-      } catch (error) {
-        // Use default settings if file doesn't exist
-        systemSettings = {
-          systemLimits: {
-            maxEmployees: 10,
-            contactEmail: "support@hrconnect.com",
-            contactPhone: "+1-234-567-8900",
-            upgradeLink: "https://hrconnect.com/upgrade"
-          }
-        };
-      }
-      
-      const maxEmployees = systemSettings.systemLimits?.maxEmployees || 10;
-      const currentEmployeeCount = allUsers.length;
-      
-      if (currentEmployeeCount >= maxEmployees) {
-        return res.status(429).json({ 
-          message: "Employee limit reached", 
-          currentCount: currentEmployeeCount,
-          maxEmployees: maxEmployees,
-          contactInfo: {
-            email: systemSettings.systemLimits?.contactEmail,
-            phone: systemSettings.systemLimits?.contactPhone,
-            upgradeLink: systemSettings.systemLimits?.upgradeLink
-          }
-        });
+      // Check if requester is an admin/hr adding an employee
+      const isInternalAdd = req.isAuthenticated() && ['admin', 'hr', 'manager', 'developer'].includes(req.user.role);
+
+      // Check employee count limits (skip if internal add for now to ensure it works)
+      if (!isInternalAdd) {
+        const allUsers = await storage.getUsers();
+        
+        // Load system settings to check employee limits
+        const SETTINGS_FILE_PATH = path.join(process.cwd(), 'data', 'system-settings.json');
+        let systemSettings: any = {};
+        try {
+          const settingsData = await fs.readFile(SETTINGS_FILE_PATH, 'utf-8');
+          systemSettings = JSON.parse(settingsData);
+        } catch (error) {
+          systemSettings = {
+            systemLimits: {
+              maxEmployees: 10,
+              contactEmail: "support@hrconnect.com",
+              contactPhone: "+1-234-567-8900",
+              upgradeLink: "https://hrconnect.com/upgrade"
+            }
+          };
+        }
+        
+        const maxEmployees = systemSettings.systemLimits?.maxEmployees || 10;
+        const currentEmployeeCount = allUsers.length;
+        
+        if (currentEmployeeCount >= maxEmployees) {
+          return res.status(429).json({ 
+            message: "Employee limit reached", 
+            currentCount: currentEmployeeCount,
+            maxEmployees: maxEmployees,
+            contactInfo: {
+              email: systemSettings.systemLimits?.contactEmail,
+              phone: systemSettings.systemLimits?.contactPhone,
+              upgradeLink: systemSettings.systemLimits?.upgradeLink
+            }
+          });
+        }
       }
       
       // Check if username already exists
@@ -171,10 +175,15 @@ export function setupAuth(app: Express) {
       // Don't expose password in response
       const { password, ...userWithoutPassword } = user;
 
-      req.login(user, (err) => {
-        if (err) return next(err);
+      // If internal add, just return the created user. Otherwise, log them in.
+      if (isInternalAdd) {
         res.status(201).json(userWithoutPassword);
-      });
+      } else {
+        req.login(user, (err) => {
+          if (err) return next(err);
+          res.status(201).json(userWithoutPassword);
+        });
+      }
     } catch (error) {
       next(error);
     }

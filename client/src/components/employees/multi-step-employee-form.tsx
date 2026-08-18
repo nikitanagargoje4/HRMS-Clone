@@ -20,7 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { User, Department } from "@shared/schema";
+import { User, Department, Unit } from "@shared/schema";
 import { Loader2, ChevronLeft, ChevronRight, CalendarIcon, User as UserIcon, Building2, CreditCard, Upload, X, FileText, Eye, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, differenceInYears, subYears } from "date-fns";
@@ -30,10 +30,12 @@ import { ContactPopup } from "@/components/ui/contact-popup";
 interface MultiStepEmployeeFormProps {
   employee?: User;
   departments: Department[];
+  units?: Unit[];
+  selectedUnit?: string;
   onSuccess: () => void;
 }
 
-export function MultiStepEmployeeForm({ employee, departments, onSuccess }: MultiStepEmployeeFormProps) {
+export function MultiStepEmployeeForm({ employee, departments, units = [], selectedUnit = "all", onSuccess }: MultiStepEmployeeFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!employee;
@@ -184,6 +186,52 @@ export function MultiStepEmployeeForm({ employee, departments, onSuccess }: Mult
   // Watch the date of birth to calculate age
   const dateOfBirth = form.watch("dateOfBirth");
   const age = calculateAge(dateOfBirth);
+
+  const filteredDepartments = selectedUnit === "all" 
+    ? departments 
+    : departments.filter(d => String(d.unitId) === selectedUnit);
+
+  // Auto-fill logic based on selectedUnit
+  useEffect(() => {
+    if (isEditing) return;
+    
+    if (selectedUnit !== "all" && units.length > 0 && employees.length > 0) {
+      const unit = units.find(u => String(u.id) === selectedUnit);
+      if (unit) {
+        // Find employees in this unit
+        const unitDeptIds = filteredDepartments.map(d => d.id);
+        const unitEmployees = employees.filter(e => e.departmentId && unitDeptIds.includes(e.departmentId));
+        
+        // Auto-select first department if none selected or if current is invalid
+        const currentDept = form.getValues("departmentId");
+        if (filteredDepartments.length > 0 && (!currentDept || !unitDeptIds.includes(currentDept))) {
+          form.setValue("departmentId", filteredDepartments[0].id);
+        }
+        
+        // Generate next employee ID
+        const prefix = unit.code ? unit.code.toUpperCase() : "EMP";
+        let maxNum = 0;
+        
+        unitEmployees.forEach(emp => {
+          if (emp.employeeId && emp.employeeId.startsWith(prefix)) {
+            const numPart = emp.employeeId.substring(prefix.length);
+            const num = parseInt(numPart, 10);
+            if (!isNaN(num) && num > maxNum) {
+              maxNum = num;
+            }
+          }
+        });
+        
+        const nextNum = maxNum + 1;
+        const newEmployeeId = `${prefix}${String(nextNum).padStart(3, '0')}`;
+        
+        const currentEmpId = form.getValues("employeeId");
+        if (!currentEmpId || currentEmpId === "" || currentEmpId === employee?.id?.toString() || (currentEmpId.startsWith(prefix) && currentEmpId !== newEmployeeId)) {
+          form.setValue("employeeId", newEmployeeId);
+        }
+      }
+    }
+  }, [selectedUnit, units, employees, isEditing]);
 
   // Handle photo file selection and conversion to base64
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -926,7 +974,7 @@ export function MultiStepEmployeeForm({ employee, departments, onSuccess }: Mult
                                   </FormControl>
                                   <SelectContent>
                                     <SelectItem value="none">No Department</SelectItem>
-                                    {departments.map((department) => (
+                                    {filteredDepartments.map((department) => (
                                       <SelectItem key={department.id} value={department.id.toString()}>
                                         {department.name}
                                       </SelectItem>
