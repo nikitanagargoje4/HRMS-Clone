@@ -20,7 +20,7 @@
     "upgradeLink": "https://example.com/upgrade"
   },
   "salaryComponents": {
-    "basicSalaryPercentage": 40,
+    "basicSalaryPercentage": 50,
     "hraPercentage": 50,
     "epfPercentage": 12,
     "esicPercentage": 2.5,

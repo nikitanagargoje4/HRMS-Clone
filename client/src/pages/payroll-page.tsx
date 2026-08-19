@@ -1191,7 +1191,6 @@ export default function PayrollPage() {
     try {
       // Find the employee for this payment record
       let targetEmployee: User | undefined;
-      let salaryBreakdown: any;
 
       if (isEmployeePayroll) {
         // Employee mode - use current user data with ownership validation
@@ -1215,7 +1214,6 @@ export default function PayrollPage() {
         }
 
         targetEmployee = user;
-        salaryBreakdown = getSalaryBreakdown(user.salary);
       } else {
         // Admin mode - find the employee from payment record
         targetEmployee = employees.find(emp => emp.id === paymentRecord.employeeId);
@@ -1228,22 +1226,31 @@ export default function PayrollPage() {
           });
           return;
         }
-
-        // Calculate salary breakdown for this employee
-        // Use amount from payment record if it exists to get the actual paid breakdown
-        const monthlyCTC = targetEmployee.salary || 0;
-        const totalAmount = paymentRecord.amount || 0;
-
-        // Infer days worked if amount is different from standard gross
-        const standardGross = (monthlyCTC / 30) * 25;
-        let daysWorked = 25;
-        if (totalAmount > 0 && Math.abs(totalAmount - standardGross) > 10) {
-          // Basic calculation to show pro-rated days on payslip if it was adjusted
-          daysWorked = Math.round((totalAmount / (monthlyCTC / 30)) * 10) / 10;
-        }
-
-        salaryBreakdown = getSalaryBreakdown(monthlyCTC, daysWorked);
       }
+
+      // Calculate salary breakdown for this employee
+      const monthlyCTC = targetEmployee.salary || 0;
+      const targetNet = paymentRecord.amount || 0;
+      
+      let bestDays = 25;
+      let minDiff = Infinity;
+      
+      // Reverse-engineer the days worked that produces this net amount
+      const monthDate = new Date(paymentRecord.month || new Date());
+      const totalDaysInMonth = (!isNaN(monthDate.getTime())) ? new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate() : 30;
+
+      if (targetNet > 0) {
+        for (let d = 0; d <= 31; d += 0.5) {
+          const breakdown = getSalaryBreakdown(monthlyCTC, d, totalDaysInMonth);
+          const diff = Math.abs(Math.round(breakdown.netSalary) - targetNet);
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestDays = d;
+          }
+        }
+      }
+      
+      const salaryBreakdown = getSalaryBreakdown(monthlyCTC, bestDays, totalDaysInMonth);
 
       const doc = new jsPDF();
 

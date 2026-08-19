@@ -695,37 +695,37 @@ export default function MusterRollPage() {
                           <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-white dark:bg-slate-950">
                             <Table className="text-xs">
                               <TableHeader>
-                                <TableRow className="bg-slate-50 dark:bg-slate-900">
-                                  <TableHead className="text-center w-10 border-r" rowSpan={2}>Sl No</TableHead>
-                                  <TableHead className="min-w-[180px] border-r" rowSpan={2}>Full name of employee</TableHead>
-                                  <TableHead className="text-center w-16 border-r" rowSpan={2}>Age/Sex</TableHead>
-                                  <TableHead className="min-w-[120px] border-r" rowSpan={2}>Designation</TableHead>
-                                  <TableHead className="text-center border-b" colSpan={daysInMonth}>Attendance Details</TableHead>
-                                  <TableHead className="text-center w-12 border-l" rowSpan={2}>{viewType === "muster" ? "Total Days" : "Days"}</TableHead>
+                                <TableRow>
+                                  <TableHead className="text-center w-10 border-r h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Sl No</TableHead>
+                                  <TableHead className="min-w-[180px] border-r h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Full name of employee</TableHead>
+                                  <TableHead className="text-center w-16 border-r h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Age/Sex</TableHead>
+                                  <TableHead className="min-w-[120px] border-r h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Designation</TableHead>
+                                  <TableHead className="text-center border-b h-auto py-2" colSpan={daysInMonth}>Attendance Details</TableHead>
+                                  <TableHead className="text-center w-12 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>{viewType === "muster" ? "Total Days" : "Days"}</TableHead>
                                   {viewType === "wage" && (
                                     <>
-                                      <TableHead className="text-center w-24 border-l" rowSpan={2}>Basic</TableHead>
-                                      <TableHead className="text-center w-28 border-l" rowSpan={2}>Dearness Allowance</TableHead>
-                                      <TableHead className="text-center w-32 border-l" rowSpan={2}>House Rent Allowance</TableHead>
-                                      <TableHead className="text-center w-24 border-l" rowSpan={2}>Conveyance</TableHead>
-                                      <TableHead className="text-center w-20 border-l" rowSpan={2}>Medical</TableHead>
-                                      <TableHead className="text-center w-28 border-l" rowSpan={2}>Special Allowance</TableHead>
-                                      <TableHead className="text-center w-28 border-l" rowSpan={2}>Bonus/Incentive</TableHead>
-                                      <TableHead className="text-center w-24 border-l" rowSpan={2}>Overtime</TableHead>
-                                      <TableHead className="text-center w-28 border-l" rowSpan={2}>Gross Earnings</TableHead>
-                                      <TableHead className="text-center w-28 border-l" rowSpan={2}>Provident Fund</TableHead>
-                                      <TableHead className="text-center w-36 border-l" rowSpan={2}>Employee State Insurance</TableHead>
-                                      <TableHead className="text-center w-28 border-l" rowSpan={2}>Professional Tax</TableHead>
-                                      <TableHead className="text-center w-32 border-l" rowSpan={2}>Tax Deducted at Source</TableHead>
-                                      <TableHead className="text-center w-20 border-l" rowSpan={2}>MLWF</TableHead>
-                                      <TableHead className="text-center w-32 border-l" rowSpan={2}>Salary Advance / Loan</TableHead>
-                                      <TableHead className="text-center w-28 border-l" rowSpan={2}>Other Deductions</TableHead>
-                                      <TableHead className="text-center w-28 border-l" rowSpan={2}>Total Deductions</TableHead>
-                                      <TableHead className="text-center w-28 border-l bg-teal-50 dark:bg-teal-900/20" rowSpan={2}>Net Salary</TableHead>
+                                      <TableHead className="text-center w-24 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Basic</TableHead>
+                                      <TableHead className="text-center w-28 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Dearness Allowance</TableHead>
+                                      <TableHead className="text-center w-32 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>House Rent Allowance</TableHead>
+                                      <TableHead className="text-center w-24 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Conveyance</TableHead>
+                                      <TableHead className="text-center w-20 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Medical</TableHead>
+                                      <TableHead className="text-center w-28 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Special Allowance</TableHead>
+                                      <TableHead className="text-center w-28 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Bonus/Incentive</TableHead>
+                                      <TableHead className="text-center w-24 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Overtime</TableHead>
+                                      <TableHead className="text-center w-28 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Gross Earnings</TableHead>
+                                      <TableHead className="text-center w-28 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Provident Fund</TableHead>
+                                      <TableHead className="text-center w-36 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Employee State Insurance</TableHead>
+                                      <TableHead className="text-center w-28 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Professional Tax</TableHead>
+                                      <TableHead className="text-center w-32 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Tax Deducted at Source</TableHead>
+                                      <TableHead className="text-center w-20 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>MLWF</TableHead>
+                                      <TableHead className="text-center w-32 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Salary Advance / Loan</TableHead>
+                                      <TableHead className="text-center w-28 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Other Deductions</TableHead>
+                                      <TableHead className="text-center w-28 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Total Deductions</TableHead>
+                                      <TableHead className="text-center w-28 border-l h-auto py-2 whitespace-normal leading-tight" rowSpan={2}>Net Salary</TableHead>
                                     </>
                                   )}
                                 </TableRow>
-                                <TableRow className="bg-slate-50/50 dark:bg-slate-900/50">
+                                <TableRow>
                                   {Array.from({ length: daysInMonth }, (_, i) => (
                                     <TableHead key={i} className="text-center w-8 p-1 border-r text-[10px] font-bold">{i + 1}</TableHead>
                                   ))}

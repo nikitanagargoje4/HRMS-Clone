@@ -312,16 +312,16 @@ export default function EmployeeDetailPage() {
   };
 
   // Calculate salary breakdown using the dynamic formula
-  const getSalaryBreakdown = (monthlyCTC: number, daysWorked: number = 25) => {
+  const getSalaryBreakdown = (monthlyCTC: number, daysWorked: number = 25, totalDaysInMonth: number = 30) => {
     // Step 1: Gross Salary
-    const grossSalary = (monthlyCTC / 30) * daysWorked; // Monthly CTC ÷ 30 × days worked
+    const grossSalary = (monthlyCTC / totalDaysInMonth) * daysWorked; // Monthly CTC ÷ totalDaysInMonth × days worked
 
     // Step 2: Earnings
     const basicSalary = grossSalary * ((currentSalaryComponents.basicSalaryPercentage || 50) / 100); 
     const da = basicSalary * 0.1; // 10% of Basic
     const hra = basicSalary * ((currentSalaryComponents.hraPercentage || 50) / 100); 
-    const conveyance = Math.round((1600 / 30) * daysWorked); // Fixed ₹1,600 pro-rated
-    const medical = Math.round((1250 / 30) * daysWorked); // Fixed ₹1,250 pro-rated
+    const conveyance = Math.round((1600 / totalDaysInMonth) * daysWorked); // Fixed ₹1,600 pro-rated
+    const medical = Math.round((1250 / totalDaysInMonth) * daysWorked); // Fixed ₹1,250 pro-rated
     const lta = basicSalary * 0.04;
     const child = basicSalary * 0.04;
     const oth = basicSalary * 0.06;
@@ -424,14 +424,28 @@ export default function EmployeeDetailPage() {
 
         // Calculate monthly totals
         const totalGrossAmount = records.reduce((sum, record) => {
-          const breakdown = getSalaryBreakdown(record.amount, record.daysWorked || 25);
-          return sum + Math.round(breakdown.grossSalary);
+          const targetNet = record.amount;
+          const monthlyCTC = employee?.salary || 0;
+          let bestGross = 0;
+          let minDiff = Infinity;
+          
+          const monthDate = new Date(month);
+          const totalDaysInMonth = (!isNaN(monthDate.getTime())) ? new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate() : 30;
+          
+          // Reverse-engineer the gross salary by finding the days worked that matches the net amount
+          for (let d = 0; d <= 31; d += 0.5) {
+            const breakdown = getSalaryBreakdown(monthlyCTC, d, totalDaysInMonth);
+            const diff = Math.abs(Math.round(breakdown.netSalary) - targetNet);
+            if (diff < minDiff) {
+              minDiff = diff;
+              bestGross = breakdown.grossSalary;
+            }
+          }
+          
+          return sum + Math.round(bestGross);
         }, 0);
 
-        const totalNetAmount = records.reduce((sum, record) => {
-          const breakdown = getSalaryBreakdown(record.amount, record.daysWorked || 25);
-          return sum + Math.round(breakdown.netSalary);
-        }, 0);
+        const totalNetAmount = records.reduce((sum, record) => sum + record.amount, 0);
 
         // Determine overall payment status for the month
         let paymentStatus: string;
@@ -575,9 +589,28 @@ export default function EmployeeDetailPage() {
     // Otherwise fall back to current employee salary
     const record = historyItem?.latestRecord;
 
-    const b = record
-      ? getSalaryBreakdown(record.amount, record.daysWorked || 25)
-      : (historyItem ? getSalaryBreakdown(historyItem.monthlyCTC || employee.salary || 0, 25) : salaryBreakdown);
+    const b = (() => {
+      if (!record) {
+        return historyItem ? getSalaryBreakdown(historyItem.monthlyCTC || employee.salary || 0, 25) : salaryBreakdown;
+      }
+      const targetNet = record.amount;
+      const monthlyCTC = employee?.salary || 0;
+      let bestDays = 25;
+      let minDiff = Infinity;
+      
+      const monthDate = new Date(record.month || (historyItem && historyItem.month) || new Date());
+      const totalDaysInMonth = (!isNaN(monthDate.getTime())) ? new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate() : 30;
+      
+      for (let d = 0; d <= 31; d += 0.5) {
+        const breakdown = getSalaryBreakdown(monthlyCTC, d, totalDaysInMonth);
+        const diff = Math.abs(Math.round(breakdown.netSalary) - targetNet);
+        if (diff < minDiff) {
+          minDiff = diff;
+          bestDays = d;
+        }
+      }
+      return getSalaryBreakdown(monthlyCTC, bestDays, totalDaysInMonth);
+    })();
 
     const payrollMonth = historyItem?.month || format(new Date(), 'MMMM yyyy');
 
@@ -903,13 +936,13 @@ export default function EmployeeDetailPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="p-4 bg-blue-950/10 rounded-xl border border-blue-500/20">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm text-slate-400">Basic Salary (50% of Gross)</span>
+                          <span className="text-sm text-slate-400">Basic Salary ({currentSalaryComponents.basicSalaryPercentage || 50}% of Gross)</span>
                           <span className="text-sm font-bold text-white">₹{Math.round(salaryBreakdown.basicSalary).toLocaleString()}</span>
                         </div>
                       </div>
                       <div className="p-4 bg-blue-950/10 rounded-xl border border-blue-500/20">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm text-slate-400">HRA (50% of Basic)</span>
+                          <span className="text-sm text-slate-400">HRA ({currentSalaryComponents.hraPercentage || 50}% of Basic)</span>
                           <span className="text-sm font-bold text-white">₹{Math.round(salaryBreakdown.hra).toLocaleString()}</span>
                         </div>
                       </div>
@@ -941,13 +974,13 @@ export default function EmployeeDetailPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="p-4 bg-red-950/10 rounded-xl border border-red-500/20">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm text-slate-400">EPF (12% of Basic)</span>
+                          <span className="text-sm text-slate-400">EPF ({currentSalaryComponents.epfPercentage || 12}% of Basic)</span>
                           <span className="text-sm font-bold text-white">₹{Math.round(salaryBreakdown.epf).toLocaleString()}</span>
                         </div>
                       </div>
                       <div className="p-4 bg-red-950/10 rounded-xl border border-red-500/20">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm text-slate-400">ESIC (0.75% of Gross)</span>
+                          <span className="text-sm text-slate-400">ESIC ({currentSalaryComponents.esicPercentage || 0.75}% of Gross)</span>
                           <span className="text-sm font-bold text-white">₹{Math.round(salaryBreakdown.esic).toLocaleString()}</span>
                         </div>
                       </div>

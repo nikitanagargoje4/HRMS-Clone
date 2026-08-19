@@ -180,6 +180,11 @@ export default function ShiftsPage() {
 
   const filteredShiftSchedule = useMemo(() => {
     let base = shiftSchedule;
+    
+    if (user?.role === 'employee') {
+      base = base.filter(s => s.id === user.id);
+    }
+    
     if (selectedUnit) {
       const unitId = parseInt(selectedUnit);
       base = base.filter(schedule => {
@@ -192,7 +197,7 @@ export default function ShiftsPage() {
       base = base.filter(s => s.employee.toLowerCase().includes(searchTerm.toLowerCase()));
     }
     return base;
-  }, [shiftSchedule, selectedUnit, searchTerm, employees, departments]);
+  }, [shiftSchedule, selectedUnit, searchTerm, employees, departments, user]);
 
   const shiftsPagination = usePagination(filteredShiftSchedule);
 
