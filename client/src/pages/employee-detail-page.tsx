@@ -280,15 +280,46 @@ export default function EmployeeDetailPage() {
     retry: 1
   });
 
-  // Calculate salary breakdown using the new formula
+  // Fetch system settings for salary components
+  const { data: systemSettings } = useQuery({
+    queryKey: ["/api/settings/system"],
+    queryFn: async () => {
+      const response = await fetch("/api/settings/system", {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        if (response.status === 403) {
+          return null;
+        }
+        throw new Error("Failed to fetch system settings");
+      }
+      return response.json();
+    },
+    retry: (failureCount, error: any) => {
+      if (error?.message?.includes("403") || error?.message?.includes("Forbidden")) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+
+  const currentSalaryComponents = systemSettings?.salaryComponents || {
+    basicSalaryPercentage: 50,
+    hraPercentage: 50,
+    epfPercentage: 12,
+    esicPercentage: 0.75,
+    professionalTax: 200
+  };
+
+  // Calculate salary breakdown using the dynamic formula
   const getSalaryBreakdown = (monthlyCTC: number, daysWorked: number = 25) => {
     // Step 1: Gross Salary
     const grossSalary = (monthlyCTC / 30) * daysWorked; // Monthly CTC ÷ 30 × days worked
 
     // Step 2: Earnings
-    const basicSalary = grossSalary * 0.5; // 50% of Gross
+    const basicSalary = grossSalary * ((currentSalaryComponents.basicSalaryPercentage || 50) / 100); 
     const da = basicSalary * 0.1; // 10% of Basic
-    const hra = basicSalary * 0.5; // 50% of Basic
+    const hra = basicSalary * ((currentSalaryComponents.hraPercentage || 50) / 100); 
     const conveyance = Math.round((1600 / 30) * daysWorked); // Fixed ₹1,600 pro-rated
     const medical = Math.round((1250 / 30) * daysWorked); // Fixed ₹1,250 pro-rated
     const lta = basicSalary * 0.04;
@@ -301,9 +332,9 @@ export default function EmployeeDetailPage() {
     const specialAllowance = Math.max(0, grossSalary - earningsBeforeSpecial);
 
     // Step 3: Deductions
-    const epf = Math.round(Math.min(basicSalary, 15000) * 0.12); // 12% of Basic capped at 15000
-    const esic = grossSalary <= 21000 ? Math.round(grossSalary * 0.0075) : 0; // 0.75% of Gross
-    const professionalTax = 200; // Fixed
+    const epf = Math.round(Math.min(basicSalary, 15000) * ((currentSalaryComponents.epfPercentage || 12) / 100)); 
+    const esic = grossSalary <= 21000 ? Math.round(grossSalary * ((currentSalaryComponents.esicPercentage || 0.75) / 100)) : 0; 
+    const professionalTax = currentSalaryComponents.professionalTax || 200;
     // MLWF - Half yearly (June & December only) - Employee: 25, Employer: 75
     const currentMonthNum = new Date().getMonth() + 1;
     const isMlwfMonth = currentMonthNum === 6 || currentMonthNum === 12;
@@ -780,11 +811,11 @@ export default function EmployeeDetailPage() {
             onValueChange={setActiveTab}
             className="w-full space-y-6"
           >
-            <TabsList className="grid w-full grid-cols-4 h-14 bg-muted p-1.5 rounded-2xl border border-border">
-              <TabsTrigger value="payroll" className="rounded-xl data-[state=active]:!bg-blue-600 data-[state=active]:!text-white font-bold text-muted-foreground hover:text-foreground dark:hover:text-white">Payroll Details</TabsTrigger>
-              <TabsTrigger value="leave" className="rounded-xl data-[state=active]:!bg-emerald-600 data-[state=active]:!text-white font-bold text-muted-foreground hover:text-foreground dark:hover:text-white">Leave Management</TabsTrigger>
-              <TabsTrigger value="attendance" className="rounded-xl data-[state=active]:!bg-purple-600 data-[state=active]:!text-white font-bold text-muted-foreground hover:text-foreground dark:hover:text-white">Attendance Records</TabsTrigger>
-              <TabsTrigger value="history" className="rounded-xl data-[state=active]:!bg-indigo-600 data-[state=active]:!text-white font-bold text-muted-foreground hover:text-foreground dark:hover:text-white">Payment History</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 h-14 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-sm">
+              <TabsTrigger value="payroll" className="rounded-xl data-[state=active]:bg-blue-600 data-[state=active]:text-white font-bold text-blue-600 hover:text-blue-800 transition-colors">Payroll Details</TabsTrigger>
+              <TabsTrigger value="leave" className="rounded-xl data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-bold text-blue-600 hover:text-blue-800 transition-colors">Leave Management</TabsTrigger>
+              <TabsTrigger value="attendance" className="rounded-xl data-[state=active]:bg-purple-600 data-[state=active]:text-white font-bold text-blue-600 hover:text-blue-800 transition-colors">Attendance Records</TabsTrigger>
+              <TabsTrigger value="history" className="rounded-xl data-[state=active]:bg-indigo-600 data-[state=active]:text-white font-bold text-blue-600 hover:text-blue-800 transition-colors">Payment History</TabsTrigger>
             </TabsList>
 
             <TabsContent value="payroll" className="space-y-6 mt-6">
