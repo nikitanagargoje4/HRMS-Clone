@@ -507,19 +507,23 @@ export default function DocumentsPage() {
                     {selectedEmployeeForDocs?.firstName?.[0]}{selectedEmployeeForDocs?.lastName?.[0]}
                   </div>
                   <div>
-                    <DialogTitle className="text-3xl font-black mb-1">{selectedEmployeeForDocs?.firstName} {selectedEmployeeForDocs?.lastName}</DialogTitle>
-                    <div className="flex flex-wrap gap-3">
-                      <div className="flex items-center text-slate-300 text-sm font-medium border-r border-white/10 pr-3">
-                        <User className="w-3.5 h-3.5 mr-1.5" />
-                        ID: {selectedEmployeeForDocs?.employeeId || selectedEmployeeForDocs?.id}
+                    <DialogTitle className="text-3xl font-black mb-1">
+                      <span style={{ color: '#ffffff', display: 'inline-block' }}>
+                        {selectedEmployeeForDocs?.firstName} {selectedEmployeeForDocs?.lastName}
+                      </span>
+                    </DialogTitle>
+                    <div className="flex flex-wrap gap-3 mt-2">
+                      <div className="flex items-center text-sm font-medium border-r border-white/20 pr-3">
+                        <User className="w-3.5 h-3.5 mr-1.5" style={{ color: '#ffffff' }} />
+                        <span style={{ color: '#ffffff' }}>ID: {selectedEmployeeForDocs?.employeeId || selectedEmployeeForDocs?.id}</span>
                       </div>
-                      <div className="flex items-center text-slate-300 text-sm font-medium border-r border-white/10 pr-3">
+                      <div className="flex items-center text-sm font-medium border-r border-white/20 pr-3">
                         <Briefcase className="w-3.5 h-3.5 mr-1.5 text-blue-300" />
-                        {selectedEmployeeForDocs?.position || 'Employee'}
+                        <span style={{ color: '#ffffff' }}>{selectedEmployeeForDocs?.position || 'Employee'}</span>
                       </div>
-                      <div className="flex items-center text-slate-300 text-sm font-medium">
+                      <div className="flex items-center text-sm font-medium">
                         <Building2 className="w-3.5 h-3.5 mr-1.5 text-indigo-300" />
-                        {departments.find(d => d.id === selectedEmployeeForDocs?.departmentId)?.name || 'General Dept'}
+                        <span style={{ color: '#ffffff' }}>{departments.find(d => d.id === selectedEmployeeForDocs?.departmentId)?.name || 'General Dept'}</span>
                       </div>
                     </div>
                   </div>

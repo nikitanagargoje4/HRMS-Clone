@@ -806,6 +806,11 @@ export default function HolidaysPage() {
                     captionLayout="buttons"
                     selected={selectedDate}
                     onSelect={(date) => date && setSelectedDate(date)}
+                    month={new Date(parseInt(selectedYear), selectedDate.getMonth(), 1)}
+                    onMonthChange={(date) => {
+                      setSelectedYear(date.getFullYear().toString());
+                      setSelectedDate(new Date(date.getFullYear(), date.getMonth(), 1));
+                    }}
                     className="rounded-xl border border-white/[0.08] shadow-lg bg-[#0c1427]/30 text-white"
                     modifiers={{
                       holiday: (date) => holidays.some(h => isSameDay(new Date(h.date), date))
@@ -839,17 +844,17 @@ export default function HolidaysPage() {
                   </div>
                 </div>
                 
-                {/* Current month holidays */}
-                {currentMonthHolidays.length > 0 && (
+                {/* Selected Year holidays */}
+                {holidaysForSelectedYear.length > 0 && (
                   <div className="bg-white/[0.01] p-6 rounded-xl border border-white/[0.08]">
                     <div className="flex items-center space-x-2 mb-4">
                       <CalendarDays className="w-5 h-5 text-blue-400" />
                       <h3 className="text-lg font-bold text-white">
-                        Holidays in {format(selectedDate, 'MMMM yyyy')}
+                        Holidays in {selectedYear}
                       </h3>
                     </div>
-                    <div className="space-y-3">
-                      {currentMonthHolidays.map((holiday, index) => (
+                    <div className="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                      {holidaysForSelectedYear.map((holiday, index) => (
                         <div key={holiday.id} className="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg shadow-sm border border-white/[0.06] hover:bg-white/[0.04] transition-shadow duration-200">
                           <div className="flex items-center space-x-3">
                             <div className="bg-blue-500/10 p-2 rounded-lg">
@@ -978,7 +983,7 @@ export default function HolidaysPage() {
             <CardContent>
               <DataTable 
                 columns={columns} 
-                data={holidays} 
+                data={holidaysForSelectedYear} 
                 searchColumn="name"
                 searchPlaceholder="Search holidays..."
               />

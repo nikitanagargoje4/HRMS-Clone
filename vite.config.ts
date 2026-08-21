@@ -36,3 +36,5 @@ export default defineConfig({
     emptyOutDir: true,
   },
 });
+
+// Trigger HMR

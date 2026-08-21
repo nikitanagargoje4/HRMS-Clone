@@ -292,7 +292,7 @@ export default function DepartmentsPage() {
                           <div className="bg-blue-500/10 p-4 rounded-2xl group-hover:scale-110 transition-transform duration-300">
                             <Building2 className="w-8 h-8 text-blue-500 dark:text-blue-400" />
                           </div>
-                          <Badge variant="outline" className="text-sm font-bold border border-border text-foreground bg-muted/30">
+                          <Badge variant="outline" className="text-sm font-bold border border-border text-foreground bg-muted/30 group-hover:opacity-0 transition-opacity duration-300">
                             ID: {dept.id}
                           </Badge>
                         </div>

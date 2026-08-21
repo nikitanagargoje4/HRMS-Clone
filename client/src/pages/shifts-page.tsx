@@ -152,6 +152,13 @@ export default function ShiftsPage() {
       refetchAssignments();
       setIsEditAssignmentOpen(false);
       toast({ title: "Assignment Saved", description: "Employee shift has been updated" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to save assignment",
+        description: error.message,
+        variant: "destructive"
+      });
     }
   });
 
@@ -170,8 +177,8 @@ export default function ShiftsPage() {
         department: dept?.name || "General",
         shift: assignment?.shiftName || "Not Assigned",
         shiftId: assignment?.shiftId,
-        startDate: assignment?.startDate || "--",
-        endDate: assignment?.endDate || "--",
+        startDate: assignment?.startDate || "",
+        endDate: assignment?.endDate || "",
       };
     });
   }, [employees, assignments, departments]);
@@ -305,15 +312,57 @@ export default function ShiftsPage() {
     setIsEditAssignmentOpen(true);
   };
 
-  const handleSaveAssignment = () => {
-    if (!editingAssignment) return;
+  const handleSaveAssignment = async () => {
+    try {
+      console.log("Saving assignment:", editingAssignment);
+      if (!editingAssignment) {
+        toast({ title: "Error", description: "No assignment selected.", variant: "destructive" });
+        return;
+      }
 
-    assignShiftMutation.mutate({
-      userId: editingAssignment.id,
-      shiftId: parseInt(editingAssignment.shiftId),
-      startDate: editingAssignment.startDate,
-      endDate: editingAssignment.endDate
-    });
+      if (!editingAssignment.shiftId) {
+        toast({ title: "Validation Error", description: "Please select a shift.", variant: "destructive" });
+        return;
+      }
+      if (!editingAssignment.startDate || !editingAssignment.endDate) {
+        toast({ title: "Validation Error", description: "Please provide both start and end dates.", variant: "destructive" });
+        return;
+      }
+
+      const payload = {
+        userId: Number(editingAssignment.id),
+        shiftId: Number(editingAssignment.shiftId),
+        startDate: editingAssignment.startDate,
+        endDate: editingAssignment.endDate
+      };
+      
+      console.log("Payload:", payload);
+
+      if (isNaN(payload.userId) || isNaN(payload.shiftId)) {
+        toast({ title: "Data Error", description: "Invalid user or shift ID.", variant: "destructive" });
+        return;
+      }
+
+      const res = await fetch("/api/shifts/assign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("Save error:", res.status, errText);
+        toast({ title: "Failed to save assignment", description: `${res.status}: ${errText}`, variant: "destructive" });
+        return;
+      }
+
+      toast({ title: "Assignment Saved", description: "Employee shift has been updated successfully!" });
+      refetchAssignments();
+      setIsEditAssignmentOpen(false);
+    } catch (err: any) {
+      console.error("Unexpected error:", err);
+      toast({ title: "Unexpected Error", description: err.message || String(err), variant: "destructive" });
+    }
   };
 
   return (
@@ -482,15 +531,6 @@ export default function ShiftsPage() {
                             >
                               <Edit className="h-3 w-3 mr-1" />
                               Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-rose-400 hover:text-rose-350 hover:bg-white/[0.04]"
-                              onClick={() => handleDeleteSchedule(schedule.id)}
-                              data-testid={`button-delete-schedule-${index}`}
-                            >
-                              <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
                         </td>
@@ -775,33 +815,25 @@ export default function ShiftsPage() {
           {editingAssignment && (
             <div className="space-y-4 py-4 text-slate-200">
               <div className="space-y-2">
-                <Label htmlFor="assignmentEmployee" className="text-slate-300">Employee Name *</Label>
+                <Label htmlFor="assignmentEmployee" className="text-slate-300">Employee Name</Label>
                 <Input
                   id="assignmentEmployee"
                   value={editingAssignment.employee}
-                  onChange={(e) => setEditingAssignment(prev => prev ? { ...prev, employee: e.target.value } : null)}
-                  className="border-white/[0.08] bg-white/[0.02] text-white focus:border-blue-500/50 rounded-xl"
+                  disabled
+                  className="border-white/[0.08] bg-white/[0.05] text-slate-400 rounded-xl opacity-75 cursor-not-allowed"
                   data-testid="input-assignment-employee"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="assignmentDepartment" className="text-slate-300">Department *</Label>
-                <Select
+                <Label htmlFor="assignmentDepartment" className="text-slate-300">Department</Label>
+                <Input
+                  id="assignmentDepartment"
                   value={editingAssignment.department}
-                  onValueChange={(value) => setEditingAssignment(prev => prev ? { ...prev, department: value } : null)}
-                >
-                  <SelectTrigger className="border-white/[0.08] bg-white/[0.02] text-slate-200 rounded-xl" data-testid="select-assignment-department">
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0c1427]/95 border-white/[0.08] text-white z-[100]">
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.name} className="focus:bg-white/[0.04]">
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  disabled
+                  className="border-white/[0.08] bg-white/[0.05] text-slate-400 rounded-xl opacity-75 cursor-not-allowed"
+                  data-testid="input-assignment-department"
+                />
               </div>
 
               <div className="space-y-2">

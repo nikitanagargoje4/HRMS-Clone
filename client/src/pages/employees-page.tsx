@@ -215,7 +215,17 @@ export default function EmployeesPage() {
               </div>
               {(user?.role === 'admin' || user?.role === 'hr' || user?.role === 'developer') && (
                 <Button
-                  onClick={() => setIsAddFormVisible(!isAddFormVisible)}
+                  onClick={() => {
+                    if (!isAddFormVisible && (!selectedUnit || selectedUnit === "all")) {
+                      toast({
+                        title: "Select Company",
+                        description: "Please select a company from the dropdown before adding an employee.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    setIsAddFormVisible(!isAddFormVisible);
+                  }}
                   className="!bg-blue-600 hover:!bg-blue-700 !text-white font-semibold rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.3)] px-4 h-10 flex items-center"
                 >
                   {isAddFormVisible ? <X className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
@@ -640,13 +650,13 @@ export default function EmployeesPage() {
                     <h2 className="text-xl font-bold text-white leading-tight">
                       {selectedEmployee.firstName} {selectedEmployee.lastName}
                     </h2>
-                    <p className="text-sm text-slate-400 font-medium mt-0.5">
+                    <p className="text-sm text-white font-medium mt-0.5">
                       {selectedEmployee.position || "No Position Set"}
                     </p>
                     {selectedEmployee.employeeId && (
-                      <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                        <Hash className="h-3 w-3" />
-                        {selectedEmployee.employeeId}
+                      <p className="text-xs text-white mt-0.5 flex items-center gap-1">
+                        <Hash className="h-3 w-3 text-white" />
+                        ID: {selectedEmployee.employeeId}
                       </p>
                     )}
                   </div>
@@ -694,8 +704,8 @@ export default function EmployeesPage() {
                         <Building2 className="h-4 w-4 text-indigo-400" />
                       </div>
                       <div>
-                        <div className="text-xs text-slate-400 font-medium">Department</div>
-                        <div className="text-slate-200 font-medium">
+                        <div className="text-xs text-white font-medium">Department</div>
+                        <div className="text-white font-medium">
                           {departments.find(d => d.id === selectedEmployee.departmentId)?.name || "Unassigned"}
                         </div>
                       </div>

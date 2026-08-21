@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Department, Unit, insertDepartmentSchema } from "@shared/schema";
+import { Department, Unit, User, insertDepartmentSchema } from "@shared/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Loader2,
@@ -50,6 +50,14 @@ export function DepartmentForm({ department, onSuccess }: DepartmentFormProps) {
     queryKey: ["/api/masters/units"],
   });
 
+  const { data: departments = [] } = useQuery<Department[]>({
+    queryKey: ["/api/departments"],
+  });
+
+  const { data: employees = [] } = useQuery<User[]>({
+    queryKey: ["/api/employees"],
+  });
+
   // Set up form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -69,6 +77,42 @@ export function DepartmentForm({ department, onSuccess }: DepartmentFormProps) {
       form.setValue("unitId", units[0].id);
     }
   }, [units, form, isEditing]);
+
+  // Auto-generate department code based on selected unit
+  const watchUnitId = form.watch("unitId");
+  
+  useEffect(() => {
+    if (!isEditing && watchUnitId && units.length > 0) {
+      const selectedUnit = units.find(u => u.id === watchUnitId);
+      if (selectedUnit) {
+        const unitCode = selectedUnit.code || selectedUnit.name.substring(0, 2).toUpperCase();
+        
+        // Find existing departments for this unit
+        const unitDepts = departments.filter(d => d.unitId === watchUnitId);
+        
+        // Extract numbers from existing codes (e.g., "CT-01" -> 1)
+        let maxNum = 0;
+        unitDepts.forEach(d => {
+          if (d.code && d.code.startsWith(`${unitCode}-`)) {
+            const numPart = d.code.split('-')[1];
+            if (numPart) {
+              const num = parseInt(numPart, 10);
+              if (!isNaN(num) && num > maxNum) {
+                maxNum = num;
+              }
+            }
+          }
+        });
+        
+        // Generate new code
+        const newCode = `${unitCode}-${String(maxNum + 1).padStart(2, '0')}`;
+        
+        if (form.getValues("code") !== newCode) {
+          form.setValue("code", newCode, { shouldValidate: true, shouldDirty: true });
+        }
+      }
+    }
+  }, [watchUnitId, units, departments, isEditing, form]);
 
   // Create or update department mutation
   const mutation = useMutation({
@@ -230,23 +274,50 @@ export function DepartmentForm({ department, onSuccess }: DepartmentFormProps) {
                 <FormField
                   control={form.control}
                   name="manager"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-bold text-slate-700 mb-2 block flex items-center">
-                        <Users className="w-4 h-4 mr-2 text-teal-600" />
-                        Manager
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter manager name"
-                          className="h-12 border-2 border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 rounded-lg text-sm font-medium transition-all duration-200 pl-4"
-                          {...field}
+                  render={({ field }) => {
+                    const selectedUnitId = form.watch('unitId');
+                    const availableManagers = employees.filter(emp => {
+                      if (emp.role === 'admin') return true;
+                      
+                      if (!selectedUnitId) return false;
+                      const dept = departments.find(d => d.id === emp.departmentId);
+                      const isInUnit = dept && dept.unitId === selectedUnitId;
+                      const isManagerRole = emp.role === 'hr';
+                      return isInUnit && isManagerRole;
+                    });
+                    
+                    return (
+                      <FormItem>
+                        <FormLabel className="text-sm font-bold text-slate-700 mb-2 block flex items-center">
+                          <Users className="w-4 h-4 mr-2 text-teal-600" />
+                          Manager
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
                           value={field.value ?? ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-12 border-2 border-slate-200 focus:border-teal-500 rounded-lg text-sm font-medium">
+                              <SelectValue placeholder="Select a Manager" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {availableManagers.length === 0 && (
+                              <SelectItem value="none" disabled>
+                                No employees in this company
+                              </SelectItem>
+                            )}
+                            {availableManagers.map((m) => (
+                              <SelectItem key={m.id} value={`${m.firstName} ${m.lastName}`}>
+                                {m.firstName} {m.lastName} {m.role === 'manager' ? '(Manager)' : ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 {/* Location Field */}

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
@@ -82,11 +82,13 @@ export default function RolesPage() {
   });
 
   // Default unit to Cybaem Tech Pvt Ltd - MOVED AFTER UNITS DEFINITION
+  const hasSetDefaultUnit = useRef(false);
   useEffect(() => {
-    if (units.length > 0 && selectedUnit === "all") {
+    if (units.length > 0 && selectedUnit === "all" && !hasSetDefaultUnit.current) {
       const cybaemUnit = units.find(u => u.name?.toLowerCase().includes("cybaem"));
       if (cybaemUnit) {
         setSelectedUnit(cybaemUnit.id.toString());
+        hasSetDefaultUnit.current = true;
       }
     }
   }, [units, selectedUnit]);
@@ -148,9 +150,9 @@ export default function RolesPage() {
     },
   });
 
-  const getRolePermissions = (role: string, customPermissions: string[] = []) => {
+  const getRolePermissions = (role: string, customPermissions: string[] | null = []) => {
     const defaultPerms = DEFAULT_ROLE_PERMISSIONS[role as keyof typeof DEFAULT_ROLE_PERMISSIONS] || [];
-    const uniquePerms = new Set([...defaultPerms, ...customPermissions]);
+    const uniquePerms = new Set([...defaultPerms, ...(customPermissions || [])]);
     return Array.from(uniquePerms);
   };
 
@@ -249,7 +251,7 @@ export default function RolesPage() {
           </div>
 
           <div className="md:col-span-1">
-            <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+            <Select value={selectedUnit} onValueChange={(val) => { setSelectedUnit(val); setSelectedDept("all"); }}>
               <SelectTrigger className="h-12 border border-white/[0.08] focus:border-blue-500/50 rounded-xl bg-white/[0.02] text-slate-200">
                 <div className="flex items-center">
                   <Building2 className="w-4 h-4 mr-2 text-slate-400" />
@@ -275,8 +277,12 @@ export default function RolesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                {/* De-duplicate departments by name */}
-                {Array.from(new Map(departments.map(d => [d.name, d])).values()).map(d => (
+                {/* De-duplicate departments by name and filter by selected unit */}
+                {Array.from(new Map(
+                  departments
+                    .filter(d => selectedUnit === "all" || d.unitId === parseInt(selectedUnit))
+                    .map(d => [d.name, d])
+                ).values()).map(d => (
                   <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>
                 ))}
               </SelectContent>
